@@ -1,0 +1,62 @@
+[
+  {
+    "ID": 1,
+    "material": "steel",
+    "weight": 7800,
+    "heigth": 1,
+    "added_traits": [
+      {
+        "charact_1": 1,
+        "charact_2": 2
+      }
+    ]
+  },
+  {
+    "ID": 2,
+    "material": "copper",
+    "weight": 8920,
+    "heigth": 1,
+    "added_traits": [
+      {
+        "charact_1": 1,
+        "charact_2": 2
+      }
+    ]
+  },
+  {
+    "ID": 3,
+    "material": "wood",
+    "weight": 650,
+    "heigth": 1,
+    "added_traits": [
+      {
+        "charact_1": 1,
+        "charact_2": 2
+      }
+    ]
+  },
+  {
+    "ID": 4,
+    "material": "concrete",
+    "weight": 2400,
+    "heigth": 1,
+    "added_traits": [
+      {
+        "charact_1": 1,
+        "charact_2": 2
+      }
+    ]
+  },
+  {
+    "ID": 5,
+    "material": "brick",
+    "weight": 1700,
+    "heigth": 1,
+    "added_traits": [
+      {
+        "charact_1": 1,
+        "charact_2": 2
+      }
+    ]
+  }
+]
