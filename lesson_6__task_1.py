@@ -20,7 +20,7 @@ def run_by_executor_map(executor_class, max_workers=3):
     executor = executor_class(max_workers=max_workers)
     start_time = time.time()
     params = [100, 200, 300, 400, 500]
-    result = list(executor.map(factorial, params))
+    executor.map(factorial, params)
     print(f'max_workers: {max_workers}. Time for {executor_class.__name__}: {time.time() - start_time}')
 
 
