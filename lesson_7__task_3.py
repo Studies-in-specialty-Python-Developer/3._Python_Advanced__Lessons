@@ -20,11 +20,11 @@ from email.message import EmailMessage
 from datetime import date
 import sqlite3
 import smtplib
+from pprint import pprint
+
 # from unittest.mock import patch
 
 from faker import Faker
-
-DATABASE_NAME = 'lesson_7__task_3.sqlite'
 
 
 class User:
@@ -62,7 +62,7 @@ def database_manipulation(func, arg):
     sqlite_connection = None
     result = None
     try:
-        sqlite_connection = sqlite3.connect(DATABASE_NAME)
+        sqlite_connection = sqlite3.connect('lesson_7__task_3_users.sqlite')
         cursor = sqlite_connection.cursor()
         full_arg = [sqlite_connection, cursor]
         full_arg.extend(arg)
@@ -165,13 +165,13 @@ user = User(fake_ua.first_name(),
             fake_ru.middle_name(),
             fake_ru.date_between(start_date='-50y', end_date='-20y'),
             fake_ua.ascii_free_email())
-# database_manipulation(add_new_user, (user,))
+database_manipulation(add_new_user, (user,))
 
 # Поиск пользователей по составному условию с AND
 
 mask = {'first_name': '', 'last_name': '', 'email': ''}
 users_list = database_manipulation(search_user, (mask,))
-print(users_list)
+pprint(users_list)
 
 # Отправка письма с благодарностями
 
