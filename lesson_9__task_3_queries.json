@@ -1,0 +1,163 @@
+{
+  "user_role": {
+    "create": [
+      "DROP TABLE IF EXISTS user_role;",
+      "CREATE TABLE IF NOT EXISTS user_role (",
+      "user_role_id INTEGER PRIMARY KEY,",
+      "role_name TEXT NOT NULL, role_description TEXT);"
+    ],
+    "add": [
+      "INSERT INTO user_role",
+      "(role_name, role_description)",
+      "VALUES (?, ?);"
+    ],
+    "get_ids": "SELECT user_role_id FROM user_role;"
+  },
+  "user": {
+    "create": [
+      "DROP TABLE IF EXISTS user;",
+      "CREATE TABLE IF NOT EXISTS user (",
+      "user_id INTEGER PRIMARY KEY,",
+      "user_name TEXT NOT NULL, password TEXT NOT NULL, user_role_id INTEGER,",
+      "FOREIGN KEY (user_role_id) REFERENCES user_role(user_role_id));"
+    ],
+    "add": [
+      "INSERT INTO user",
+      "(user_name, password, user_role_id)",
+      "VALUES (?, ?, ?);"
+    ],
+    "get_ids": "SELECT user_id FROM user;"
+  },
+  "profile": {
+    "create": [
+      "DROP TABLE IF EXISTS profile;",
+      "CREATE TABLE IF NOT EXISTS profile (",
+      "profile_id INTEGER PRIMARY KEY,",
+      "firstName TEXT NOT NULL, lastName TEXT NOT NULL, email TEXT,",
+      " phoneNumber TEXT, postalCode TEXT, user_id INTEGER UNIQUE,",
+      "FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE);"
+    ],
+    "add": [
+      "INSERT INTO profile",
+      "(firstName, lastName, email, phoneNumber, postalCode, user_id)",
+      "VALUES (?, ?, ?, ?, ?, ?);"
+    ],
+    "get_ids": "SELECT profile_id FROM profile;"
+  },
+  "incident": {
+    "create": [
+      "DROP TABLE IF EXISTS incident;",
+      "CREATE TABLE IF NOT EXISTS incident (",
+      "incident_id INTEGER PRIMARY KEY,",
+      "serviceName TEXT NOT NULL, isActive INTEGER, problemDescription TEXT, user_id INTEGER,",
+      "FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE);"
+    ],
+    "add": [
+      "INSERT INTO incident",
+      "(serviceName, isActive, problemDescription, user_id)",
+      "VALUES (?, ?, ?, ?);"
+    ],
+    "get_ids": "SELECT incident_id FROM incident;"
+  },
+  "service": {
+    "create": [
+      "DROP TABLE IF EXISTS service;",
+      "CREATE TABLE IF NOT EXISTS service (",
+      "service_id INTEGER PRIMARY KEY,",
+      "serviceName TEXT NOT NULL, isActive INTEGER, serviseMonthPrice REAL, customerId INTEGER);"
+    ],
+    "add": [
+      "INSERT INTO service",
+      "(serviceName, isActive, serviseMonthPrice, customerId)",
+      "VALUES (?, ?, ?, ?);"
+    ],
+    "get_ids": "SELECT service_id FROM service;"
+  },
+  "user_services": {
+    "create": [
+      "DROP TABLE IF EXISTS user_services;",
+      "CREATE TABLE IF NOT EXISTS user_services (",
+      "user_id INTEGER, service_id INTEGER,",
+      "CONSTRAINT pk_user_services PRIMARY KEY (user_id, service_id),",
+      "FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE",
+      "FOREIGN KEY (service_id) REFERENCES service(service_id));"
+    ],
+    "add": [
+      "INSERT INTO user_services",
+      "(user_id, service_id)",
+      "VALUES (?, ?);"
+    ]
+  },
+  "DMLQueries": {
+    "fetch_all_users": [
+      "SELECT user.user_id, profile.user_id, profile.firstName, profile.lastName, user.user_name,",
+      "user_role.role_name, profile.email, profile.phoneNumber, profile.postalCode",
+      "FROM user",
+      "JOIN user_role ON user_role.user_role_id = user.user_role_id",
+      "JOIN profile ON profile.user_id = user.user_id"
+    ],
+    "fetch_user_by_id": [
+      "SELECT user.user_id, profile.profile_id, profile.firstName, profile.lastName, user.user_name,",
+      "user_role.role_name, profile.email, profile.phoneNumber, profile.postalCode",
+      "FROM user",
+      "JOIN user_role ON user_role.user_role_id = user.user_role_id",
+      "JOIN profile ON profile.user_id = user.user_id",
+      "WHERE user.user_id = (?)"
+    ],
+    "fetch_all_incidents": [
+      "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
+      "FROM user",
+      "JOIN incident ON user.user_id = incident.incident_id"
+    ],
+    "fetch_incident_by_id": [
+      "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
+      "FROM user",
+      "JOIN incident ON user.user_id = incident.incident_id",
+      "WHERE incident.incident_id = (?)"
+    ],
+    "fetch_all_active_incidents": [
+      "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
+      "FROM user",
+      "JOIN incident ON user.user_id = incident.incident_id",
+      "WHERE incident.isActive = 1"
+    ],
+    "add_user": [
+      "INSERT INTO profile",
+      "(profile_id, firstName, lastName, email, phoneNumber, postalCode, user_id)",
+      "VALUES (?, ?, ?, ?, ?, ?, ?);",
+      "INSERT INTO user",
+      "(user_id, user_name, password, user_role_id)",
+      "VALUES (?, ?, ?, ?);"
+    ],
+    "update_user_by_id": [
+      "UPDATE profile",
+      "SET firstName = ?, lastName = ?, email = ?, phoneNumber = ?, postalCode = ?",
+      "WHERE profile_id = ?;",
+      "UPDATE user",
+      "SET user_name = ?, password = ?, user_role_id = ?",
+      "WHERE user_id = ?;"
+    ],
+    "del_user": [
+      "PRAGMA foreign_keys = ON;",
+      "DELETE FROM user WHERE user_id = ?;"
+    ],
+    "subscribe_service_by_id": [
+      "DELETE FROM user_services WHERE user_id = ? AND service_id = ?;",
+      "INSERT INTO user_services",
+      "(user_id, service_id)",
+      "VALUES (?, ?);"
+    ],
+    "unsubscribe_service_by_id": [
+      "DELETE FROM user_services WHERE user_id = ? AND service_id = ?;"
+    ],
+    "create_incident": [
+      "INSERT INTO incident",
+      "(incident_id, serviceName, isActive, problemDescription, user_id)",
+      "VALUES (?, ?, ?, ?, ?);"
+    ],
+    "close_incident": [
+      "UPDATE incident SET isActive = 0",
+      "WHERE incident.incident_id = ?;"
+    ]
+  }
+}

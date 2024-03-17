@@ -1,0 +1,150 @@
+{
+  "authors": {
+    "create": [
+      "DROP TABLE IF EXISTS authors;",
+      "CREATE TABLE IF NOT EXISTS authors (",
+      "author_id INTEGER PRIMARY KEY,",
+      "surname TEXT NOT NULL, name TEXT NOT NULL, age INTEGER NOT NULL, country TEXT NOT NULL);"
+    ],
+    "add": [
+      "INSERT INTO authors",
+      "(surname, name, age, country)",
+      "VALUES (?,?,?,?);"
+    ]
+  },
+  "books": {
+    "create": [
+      "DROP TABLE IF EXISTS books;",
+      "CREATE TABLE IF NOT EXISTS books (",
+      "book_id INTEGER PRIMARY KEY,",
+      "title TEXT NOT NULL, genre TEXT NOT NULL, count_page INTEGER NOT NULL,",
+      "price REAL NOT NULL, amount INTEGER NOT NULL, rating REAL NOT NULL);"
+    ],
+    "add": [
+      "INSERT INTO books",
+      "(title, genre, count_page, price, amount, rating)",
+      "VALUES (?, ?, ?, ?, ?, ?);"
+    ]
+  },
+  "auth_book": {
+    "create": [
+      "DROP TABLE IF EXISTS auth_book;",
+      "CREATE TABLE IF NOT EXISTS auth_book (",
+      "auth_book_id INTEGER PRIMARY KEY,",
+      "fk_book_id INTEGER NOT NULL, fk_author_id INTEGER NOT NULL,",
+      "FOREIGN KEY (fk_book_id) REFERENCES books(book_id)",
+      "FOREIGN KEY (fk_author_id) REFERENCES authors(author_id));"
+    ],
+    "add": [
+      "INSERT INTO auth_book",
+      "(fk_book_id, fk_author_id)",
+      "VALUES (?,?)"
+    ]
+  },
+  "views": {
+    "1": [
+      "DROP VIEW IF EXISTS '01 Authors over 25 years old';",
+      "CREATE VIEW '01 Authors over 25 years old' AS",
+      "SELECT surname, name, age",
+      "FROM authors",
+      "WHERE age > 25"
+    ],
+    "2": [
+      "DROP VIEW IF EXISTS '02 Authors in the range of 35-50 years';",
+      "CREATE VIEW '02 Authors in the range of 35-50 years' AS",
+      "SELECT surname, name, age",
+      "FROM authors",
+      "WHERE age BETWEEN 35 AND 50"
+    ],
+    "3": [
+      "DROP VIEW IF EXISTS '03 The first 20 books that have the \"Detective\" genre';",
+      "CREATE VIEW '03 The first 20 books that have the \"Detective\" genre' AS",
+      "SELECT books.title AS title, authors.surname || ' ' || authors.name AS author, books.genre as genre",
+      "FROM books",
+      "JOIN auth_book ON books.book_id = auth_book.fk_book_id",
+      "JOIN authors ON auth_book.fk_author_id = authors.author_id",
+      "WHERE books.genre = 'Detective'",
+      "LIMIT 20"
+    ],
+    "4": [
+      "DROP VIEW IF EXISTS '04 Top 10 books in the \"Adventure\" genre';",
+      "CREATE VIEW '04 Top 10 books in the \"Adventure\" genre' AS",
+      "SELECT books.title AS title, authors.surname || ' ' || authors.name AS author,",
+      "books.rating AS rating, books.genre AS genre",
+      "FROM books",
+      "JOIN auth_book ON books.book_id = auth_book.fk_book_id",
+      "JOIN authors ON auth_book.fk_author_id = authors.author_id",
+      "WHERE books.genre = 'Adventure'",
+      "ORDER BY rating DESC",
+      "LIMIT 10"
+    ],
+    "5": [
+      "DROP VIEW IF EXISTS '05 The age 31-45, the number of pages is more than 200';",
+      "CREATE VIEW '05 The age 31-45, the number of pages is more than 200' AS",
+      "SELECT books.title AS title, authors.surname || ' ' || authors.name AS author,",
+      "authors.age AS age, books.count_page AS pages",
+      "FROM books",
+      "JOIN auth_book ON books.book_id = auth_book.fk_book_id",
+      "JOIN authors ON auth_book.fk_author_id = authors.author_id",
+      "WHERE age BETWEEN 31 AND 45",
+      "AND pages >= 200",
+      "ORDER BY title, pages DESC"
+    ],
+    "6": [
+      "DROP VIEW IF EXISTS '06 Unique countries of authors';",
+      "CREATE VIEW '06 Unique countries of authors' AS",
+      "select country, count(country) AS count",
+      "from authors",
+      "GROUP BY country"
+    ],
+    "7": [
+      "DROP VIEW IF EXISTS '07 The average price of a book';",
+      "CREATE VIEW '07 The average price of a book' AS",
+      "SELECT AVG(price) AS 'avgerage price'",
+      "FROM books"
+    ],
+    "8": [
+      "DROP VIEW IF EXISTS '08 The total cost of books';",
+      "CREATE VIEW '08 The total cost of books' AS",
+      "SELECT SUM(price * amount) AS 'total cost'",
+      "FROM books"
+    ],
+    "9": [
+      "DROP VIEW IF EXISTS '09 Average book price in UAH';",
+      "CREATE VIEW '09 Average book price in UAH' AS",
+      "SELECT AVG(price) * 36.6 AS 'avgerage price in UAH'",
+      "FROM books"
+    ],
+    "10": [
+      "DROP VIEW IF EXISTS '10 The total cost of books in UAH';",
+      "CREATE VIEW '10 The total cost of books in UAH' AS",
+      "SELECT SUM(price * amount * 36.6) AS 'total cost in UAH'",
+      "FROM books"
+    ],
+    "11": [
+      "DROP VIEW IF EXISTS '11 The most expensive price for a book';",
+      "CREATE VIEW '11 The most expensive price for a book' AS",
+      "SELECT MAX(price)",
+      "FROM books"
+    ],
+    "12": [
+      "DROP VIEW IF EXISTS '12 Minimum book price';",
+      "CREATE VIEW '12 Minimum book price' AS",
+      "SELECT MIN(price)",
+      "FROM books"
+    ],
+    "13": [
+      "DROP VIEW IF EXISTS '13 Total number of books in the store';",
+      "CREATE VIEW '13 Total number of books in the store' AS",
+      "SELECT SUM(amount)",
+      "FROM books"
+    ],
+    "14": [
+      "DROP VIEW IF EXISTS '14 The number of unique authors';",
+      "CREATE VIEW '14 The number of unique authors' AS",
+      "SELECT surname || ' ' || name AS 'author', count(surname || name) AS count",
+      "FROM authors",
+      "GROUP BY (author)"
+    ]
+  }
+}

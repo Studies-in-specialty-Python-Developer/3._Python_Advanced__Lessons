@@ -1,0 +1,244 @@
+{
+  "faculties": {
+    "create": [
+      "DROP TABLE IF EXISTS faculties;",
+      "CREATE TABLE IF NOT EXISTS faculties (",
+      "faculty_id INTEGER PRIMARY KEY, name TEXT NOT NULL);"
+    ],
+    "add": [
+      "INSERT INTO faculties",
+      "(name)",
+      "VALUES (?);"
+    ]
+  },
+  "persons": {
+    "create": [
+      "DROP TABLE IF EXISTS persons;",
+      "CREATE TABLE IF NOT EXISTS persons (",
+      "person_id INTEGER PRIMARY KEY, surname TEXT NOT NULL, name TEXT NOT NULL, patronymic TEXT,",
+      "sex INTEGER, passport TEXT, address TEXT);"
+    ],
+    "add": [
+      "INSERT INTO persons",
+      "(surname, name, patronymic, sex, passport, address)",
+      "VALUES (?, ?, ?, ?, ?, ?);"
+    ]
+  },
+  "students": {
+    "create": [
+      "DROP TABLE IF EXISTS students;",
+      "CREATE TABLE IF NOT EXISTS students (",
+      "student_id INTEGER PRIMARY KEY,",
+      "FOREIGN KEY (student_id) REFERENCES persons(person_id));"
+    ],
+    "add": [
+      "INSERT INTO students",
+      "(student_id)",
+      "VALUES (?);"
+    ]
+  },
+  "relatives": {
+    "create": [
+      "DROP TABLE IF EXISTS relatives;",
+      "CREATE TABLE IF NOT EXISTS relatives (",
+      "relative_id INTEGER PRIMARY KEY,",
+      "FOREIGN KEY (relative_id) REFERENCES persons(person_id));"
+    ],
+    "add": [
+      "INSERT INTO relatives",
+      "(relative_id)",
+      "VALUES (?);"
+    ]
+  },
+  "teachers": {
+    "create": [
+      "DROP TABLE IF EXISTS teachers;",
+      "CREATE TABLE IF NOT EXISTS teachers (",
+      "teacher_id INTEGER PRIMARY KEY,",
+      "FOREIGN KEY (teacher_id) REFERENCES persons(person_id));"
+    ],
+    "add": [
+      "INSERT INTO teachers",
+      "(teacher_id)",
+      "VALUES (?);"
+    ]
+  },
+  "students__relatives": {
+    "create": [
+      "DROP TABLE IF EXISTS students__relatives;",
+      "CREATE TABLE IF NOT EXISTS students__relatives (",
+      "student_id INTEGER, relative_id INTEGER,",
+      "CONSTRAINT pk_students_relatives PRIMARY KEY (student_id, relative_id),",
+      "FOREIGN KEY (student_id) REFERENCES students(student_id)",
+      "FOREIGN KEY (relative_id) REFERENCES relatives(relative_id));"
+    ],
+    "add": [
+      "INSERT INTO students__relatives",
+      "(student_id, relative_id)",
+      "VALUES (?, ?);"
+    ]
+  },
+  "chairs": {
+    "create": [
+      "DROP TABLE IF EXISTS chairs;",
+      "CREATE TABLE IF NOT EXISTS chairs (",
+      "chair_id INTEGER PRIMARY KEY,",
+      "name TEXT NOT NULL, faculty_id INTEGER, chair_head_id INTEGER, specialized INTEGER,",
+      "FOREIGN KEY (faculty_id) REFERENCES faculties(faculty_id),",
+      "FOREIGN KEY (chair_head_id) REFERENCES persons(person_id));"
+    ],
+    "add": [
+      "INSERT INTO chairs",
+      "(name, faculty_id, chair_head_id, specialized)",
+      "VALUES (?, ?, ?, ?);"
+    ]
+  },
+  "posts": {
+    "create": [
+      "DROP TABLE IF EXISTS posts;",
+      "CREATE TABLE IF NOT EXISTS posts (",
+      "post_id INTEGER PRIMARY KEY, name TEXT NOT NULL);"
+    ],
+    "add": [
+      "INSERT INTO posts",
+      "(name)",
+      "VALUES (?);"
+    ]
+  },
+  "chairs__teachers": {
+    "create": [
+      "DROP TABLE IF EXISTS chairs__teachers;",
+      "CREATE TABLE IF NOT EXISTS chairs__teachers (",
+      "chair_id INTEGER, teacher_id INTEGER, post_id INTEGER,",
+      "CONSTRAINT pk_chairs_teachers PRIMARY KEY (chair_id, teacher_id),",
+      "FOREIGN KEY (chair_id) REFERENCES chairs(chair_id),",
+      "FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id),",
+      "FOREIGN KEY (post_id) REFERENCES posts(post_id));"
+    ],
+    "add": [
+      "INSERT INTO chairs__teachers",
+      "(chair_id, teacher_id, post_id)",
+      "VALUES (?, ?, ?);"
+    ]
+  },
+  "groups": {
+    "create": [
+      "DROP TABLE IF EXISTS groups;",
+      "CREATE TABLE IF NOT EXISTS groups (",
+      "group_id INTEGER PRIMARY KEY, name TEXT NOT NULL,",
+      "faculty_id INTEGER, chair_id INTEGER, group_leader_id INTEGER,",
+      "FOREIGN KEY (faculty_id) REFERENCES faculties(faculty_id)",
+      "FOREIGN KEY (chair_id) REFERENCES chairs(chair_id)",
+      "FOREIGN KEY (group_leader_id) REFERENCES persons(person_id));"
+    ],
+    "add": [
+      "INSERT INTO groups",
+      "(name, faculty_id, chair_id, group_leader_id)",
+      "VALUES (?, ?, ?, ?);"
+    ]
+  },
+  "students__groups": {
+    "create": [
+      "DROP TABLE IF EXISTS students__groups;",
+      "CREATE TABLE IF NOT EXISTS students__groups (",
+      "student_id INTEGER, group_id INTEGER,",
+      "CONSTRAINT pk_students_groups PRIMARY KEY (student_id, group_id),",
+      "FOREIGN KEY (student_id) REFERENCES students(student_id)",
+      "FOREIGN KEY (group_id) REFERENCES groups(group_id));"
+    ],
+    "add": [
+      "INSERT INTO students__groups",
+      "(student_id, group_id)",
+      "VALUES (?, ?);"
+    ]
+  },
+  "views": {
+    "1": [
+      "DROP VIEW IF EXISTS '1. Students list';",
+      "CREATE VIEW '1. Students list' AS",
+      "SELECT persons.surname || ' ' || persons.name || ' ' || persons.patronymic AS 'Full name',",
+      "faculties.name AS 'Faculty', groups.name AS 'Group', chairs.name AS 'Chair'",
+      "FROM students",
+      "JOIN persons ON students.student_id = persons.person_id",
+      "JOIN students__groups ON students.student_id = students__groups.student_id",
+      "JOIN groups ON groups.group_id = students__groups.group_id",
+      "JOIN faculties ON groups.faculty_id = faculties.faculty_id",
+      "JOIN chairs ON groups.chair_id = chairs.chair_id;"
+    ],
+    "2": [
+      "DROP VIEW IF EXISTS '2. List of students without parents';",
+      "CREATE VIEW '2. List of students without parents' AS",
+      "SELECT persons.surname || ' ' || persons.name || ' ' || persons.patronymic AS 'Full name',",
+      "faculties.name AS 'Faculty', groups.name AS 'Group', chairs.name AS 'Chair'",
+      "FROM students",
+      "JOIN persons ON students.student_id = persons.person_id",
+      "JOIN students__groups ON students.student_id = students__groups.student_id",
+      "JOIN groups ON groups.group_id = students__groups.group_id",
+      "JOIN faculties ON groups.faculty_id = faculties.faculty_id",
+      "JOIN chairs ON groups.chair_id = chairs.chair_id",
+      "WHERE students.student_id NOT IN (SELECT student_id FROM students__relatives);"
+    ],
+    "3": [
+      "DROP VIEW IF EXISTS '3. Teachers list';",
+      "CREATE VIEW '3. Teachers list' AS",
+      "SELECT persons.surname || ' ' || persons.name || ' ' || persons.patronymic AS 'Full name',",
+      "faculties.name AS 'Faculty', chairs.name AS 'Chair'",
+      "FROM teachers",
+      "JOIN persons ON teachers.teacher_id = persons.person_id",
+      "JOIN chairs__teachers ON teachers.teacher_id = chairs__teachers.teacher_id",
+      "JOIN chairs ON chairs.chair_id = chairs__teachers.chair_id",
+      "JOIN faculties ON chairs.faculty_id = faculties.faculty_id;"
+    ],
+    "4": [
+      "DROP VIEW IF EXISTS '4. Chair heads';",
+      "CREATE VIEW '4. Chair heads' AS",
+      "SELECT persons.surname || ' ' || persons.name || ' ' || persons.patronymic AS 'Full name',",
+      "chairs.name AS 'Chair', faculties.name AS 'Faculty'",
+      "FROM chairs",
+      "JOIN persons ON chairs.chair_head_id = persons.person_id",
+      "JOIN faculties ON chairs.faculty_id = faculties.faculty_id"
+    ],
+    "5": [
+      "DROP VIEW IF EXISTS '5. Chairs without head';",
+      "CREATE VIEW '5. Chairs without head' AS",
+      "SELECT chairs.name AS 'Chair', faculties.name AS 'Faculty'",
+      "FROM chairs",
+      "JOIN faculties ON chairs.faculty_id = faculties.faculty_id",
+      "WHERE chairs.chair_head_id is null"
+    ],
+    "6": [
+      "DROP VIEW IF EXISTS '6. Groups without leaders';",
+      "CREATE VIEW '6. Groups without leaders' AS",
+      "SELECT groups.name AS 'Group', chairs.name AS 'Chair', faculties.name AS 'Faculty'",
+      "FROM groups",
+      "JOIN faculties ON groups.faculty_id = faculties.faculty_id",
+      "JOIN chairs ON groups.chair_id = chairs.chair_id",
+      "WHERE groups.group_leader_id is null"
+    ],
+    "7": [
+      "DROP VIEW IF EXISTS '7. Parents and their children-students';",
+      "CREATE VIEW '7. Parents and their children-students' as",
+      "SELECT persons.surname || ' ' || persons.name || ' ' || persons.patronymic AS Relative,",
+      "persons_1.surname || ' ' || persons_1.name || ' ' || persons_1.patronymic AS Student",
+      "FROM relatives",
+      "JOIN students__relatives ON relatives.relative_id = students__relatives.relative_id",
+      "JOIN students ON students__relatives.student_id = students.student_id",
+      "JOIN persons ON relatives.relative_id = persons.person_id",
+      "JOIN persons AS persons_1 ON students.student_id = persons_1.person_id",
+      "ORDER BY Relative;"
+    ],
+    "8": [
+      "DROP VIEW IF EXISTS '8. List of teachers with student children';",
+      "CREATE VIEW '8. List of teachers with student children' as",
+      "SELECT persons.surname || ' ' || persons.name || ' ' || persons.patronymic AS Teacher,",
+      "persons_1.surname || ' ' || persons_1.name || ' ' || persons_1.patronymic AS Student",
+      "FROM relatives",
+      "JOIN students__relatives ON relatives.relative_id = students__relatives.relative_id",
+      "JOIN students ON students__relatives.student_id = students.student_id",
+      "JOIN persons ON relatives.relative_id = persons.person_id",
+      "JOIN persons AS persons_1 ON students.student_id = persons_1.person_id",
+      "WHERE relatives.relative_id IN (SELECT teacher_id FROM teachers)",
+      "ORDER BY Teacher;"
+    ]
+  }
+}
