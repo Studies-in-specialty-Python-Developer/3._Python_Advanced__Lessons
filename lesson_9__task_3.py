@@ -75,26 +75,27 @@ QUANTITIES = {
 
 
 class Roles(enum.Enum):
-    USER = (1, 'USER')
-    ADMIN = (2, 'ADMIN')
-    SUPER_ADMIN = (3, 'SUPER ADMIN')
-    EXIT = (4, 'EXIT')
+    USER = ('USER', [])
+    ADMIN = ('ADMIN', [])
+    SUPER_ADMIN = ('SUPER ADMIN', [])
+    EXIT = ('EXIT', [])
 
 
 class DMLQueries(enum.Enum):
-    fetch_all_users = (1, 'Display a list of all users with all dependencies')
-    fetch_user_by_id = (2, 'Display user by id with all dependencies')
-    fetch_all_incidents = (3, 'Display a list of all incidents and associated users')
-    fetch_incident_by_id = (4, 'Display incident by id')
-    fetch_all_active_incidents = (5, 'Display a list of all active incidents and associated users')
-    add_user = (6, 'Create a new user with a profile')
-    update_user_by_id = (7, 'Update user data by id with profile')
-    del_user = (8, 'Delete user by id with all dependencies')
-    subscribe_service_by_id = (9, 'Subscribe to the service by id')
-    unsubscribe_service_by_id = (10, 'Unsubscribe from the service by id')
-    create_incident = (11, 'Create an incident (ticket)')
-    close_incident = (12, 'Set incident status as completed')
-    exit = (13, 'Exit')
+    fetch_all_users = ('Display a list of all users with all dependencies', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    fetch_user_by_id = ('Display user by id with all dependencies', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    fetch_all_incidents = ('Display a list of all incidents and associated users', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    fetch_incident_by_id = ('Display incident by id', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    fetch_all_active_incidents = (
+        'Display a list of all active incidents and associated users', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    add_user = ('Create a new user with a profile', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    update_user_by_id = ('Update user data by id with profile', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    del_user = ('Delete user by id with all dependencies', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    subscribe_service_by_id = ('Subscribe to the service by id', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
+    unsubscribe_service_by_id = ('Unsubscribe from the service by id', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
+    create_incident = ('Create an incident (ticket)', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
+    close_incident = ('Set incident status as completed', [Roles.ADMIN, Roles.SUPER_ADMIN])
+    exit = ('Exit', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
 
 
 def database_manipulation(func, args: tuple):
@@ -146,7 +147,7 @@ def add_new_records(args: tuple):
     return True
 
 
-def get_id_list(list_of_tuples: list) -> list:
+def get_field_list(list_of_tuples: list) -> list:
     if list_of_tuples:
         return [element[0] for element in list_of_tuples]
     else:
@@ -170,7 +171,8 @@ def database_initialization(queries: dict):
                   ('ADMIN', fake.sentence(nb_words=3)),
                   ('SUPER_ADMIN', fake.sentence(nb_words=3))]
     database_manipulation(add_new_records, (' '.join(queries.get('user_role').get('add')), table_data))
-    id_lists['user_role'] = get_id_list(database_manipulation(select_data, (queries.get('user_role').get('get_ids'),)))
+    id_lists['user_role'] = get_field_list(
+        database_manipulation(select_data, (queries.get('user_role').get('get_ids'),)))
 
     # user
     table_data.clear()
@@ -179,7 +181,7 @@ def database_initialization(queries: dict):
                            fake.password(length=choice(range(7, 12)), special_chars=False),
                            choice(id_lists['user_role'])))
     database_manipulation(add_new_records, (' '.join(queries.get('user').get('add')), table_data))
-    id_lists['user'] = get_id_list(database_manipulation(select_data, (queries.get('user').get('get_ids'),)))
+    id_lists['user'] = get_field_list(database_manipulation(select_data, (queries.get('user').get('get_ids'),)))
 
     # profile
     table_data.clear()
@@ -194,7 +196,7 @@ def database_initialization(queries: dict):
                            fake.postcode(),
                            random_user_id))
     database_manipulation(add_new_records, (' '.join(queries.get('profile').get('add')), table_data))
-    id_lists['profile'] = get_id_list(database_manipulation(select_data, (queries.get('profile').get('get_ids'),)))
+    id_lists['profile'] = get_field_list(database_manipulation(select_data, (queries.get('profile').get('get_ids'),)))
 
     # service
     table_data.clear()
@@ -204,7 +206,7 @@ def database_initialization(queries: dict):
                            round(random() * 100, 2),
                            randint(1, 100)))
     database_manipulation(add_new_records, (' '.join(queries.get('service').get('add')), table_data))
-    id_lists['service'] = get_id_list(database_manipulation(select_data, (queries.get('service').get('get_ids'),)))
+    id_lists['service'] = get_field_list(database_manipulation(select_data, (queries.get('service').get('get_ids'),)))
 
     # user_services
     table_data.clear()
@@ -216,32 +218,15 @@ def database_initialization(queries: dict):
 
     # incident
     table_data.clear()
-    service_names = get_id_list(database_manipulation(select_data, ("SELECT serviceName FROM service;",)))
+    service_names = get_field_list(
+        database_manipulation(select_data, (queries.get('service').get('get_serviceNames'),)))
     for _ in range(QUANTITIES.get('incident')):
         table_data.append((choice(service_names),
                            choice([0, 1]),
                            fake.paragraph(nb_sentences=3),
                            choice(id_lists['user'])))
     database_manipulation(add_new_records, (' '.join(queries.get('incident').get('add')), table_data))
-    id_lists['incident'] = get_id_list(database_manipulation(select_data, (queries.get('incident').get('get_ids'),)))
-
-
-def user_menu(header: str, items: enum.EnumMeta):
-    result = None
-    while result is None:
-        print(header)
-        for item in items:
-            print(f'{item.value[0]}. {item.value[1]}')
-        print()
-        try:
-            item_choice = int(input('Enter your choice: '))
-            if item_choice not in [item.value[0] for item in items]:
-                raise ValueError
-            result = next(item for item in items if item.value[0] == item_choice)
-        except ValueError:
-            print('Wrong choice! Please enter a valid number.')
-            continue
-    return result
+    id_lists['incident'] = get_field_list(database_manipulation(select_data, (queries.get('incident').get('get_ids'),)))
 
 
 def input_integer(input_str: str, valid_values: list) -> int:
@@ -253,9 +238,28 @@ def input_integer(input_str: str, valid_values: list) -> int:
                 result = None
                 raise ValueError
         except ValueError:
-            print('Wrong input! Please enter a valid integer.')
+            print(f'Wrong input! Please enter an integer from valid values: {valid_values}')
             continue
     return result
+
+
+def user_menu(header: str, items: enum.EnumMeta, role_to_display: enum.Enum = None):
+    result = None
+    display_menu_items = []
+    while result is None:
+        print(header)
+        number = 1
+        for item in items:
+            if all([role_to_display is not None, item.value[1]]):
+                if role_to_display not in item.value[1]:
+                    continue
+            print(f'{str(number).rjust(2, " ")}. {item.value[0]}')
+            display_menu_items.append(item)
+            number += 1
+        print()
+        item_choice = input_integer('Enter your choice: ', list(range(1, number + 1)))
+        result = display_menu_items[item_choice - 1]
+        return result
 
 
 if __name__ == '__main__':
@@ -267,45 +271,47 @@ if __name__ == '__main__':
     #
     # database_initialization(query_list)
 
-    id_lists = {'user': get_id_list(database_manipulation(select_data, (query_list.get('user').get('get_ids'),))),
-                'user_role': get_id_list(
+    id_lists = {'user': get_field_list(database_manipulation(select_data, (query_list.get('user').get('get_ids'),))),
+                'user_role': get_field_list(
                     database_manipulation(select_data, (query_list.get('user_role').get('get_ids'),))),
-                'profile': get_id_list(database_manipulation(select_data, (query_list.get('profile').get('get_ids'),))),
-                'service': get_id_list(database_manipulation(select_data, (query_list.get('service').get('get_ids'),))),
-                'incident': get_id_list(
+                'profile': get_field_list(
+                    database_manipulation(select_data, (query_list.get('profile').get('get_ids'),))),
+                'service': get_field_list(
+                    database_manipulation(select_data, (query_list.get('service').get('get_ids'),))),
+                'incident': get_field_list(
                     database_manipulation(select_data, (query_list.get('incident').get('get_ids'),)))}
 
-    # user_role = user_menu('\n   Select your database role: ', Roles)
-    # if user_role == Roles.EXIT:
-    #     exit(0)
+    user_role = user_menu('\n   Select your database role: ', Roles)
+    if user_role == Roles.EXIT:
+        exit(0)
     oper_args = []
     while True:
-        user_choice = user_menu('\n   Select operation: ', DMLQueries)
+        user_choice = user_menu('\n   Select operation: ', DMLQueries, user_role)
         oper_args.clear()
         oper_func = None
         oper_status = ''
         if user_choice == DMLQueries.fetch_all_users:
             oper_args.append(' '.join(query_list.get('DMLQueries').get(user_choice.name)))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}'
+            oper_status = f'   {user_choice.value[0]}'
         elif user_choice == DMLQueries.fetch_user_by_id:
             oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
             oper_args = [' '.join(query_list.get('DMLQueries').get(user_choice.name)), oper_user_id]
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}. User ID = {oper_user_id}'
+            oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}'
         elif user_choice == DMLQueries.fetch_all_incidents:
             oper_args.append(' '.join(query_list.get('DMLQueries').get(user_choice.name)))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}'
+            oper_status = f'   {user_choice.value[0]}'
         elif user_choice == DMLQueries.fetch_incident_by_id:
             oper_incident_id = input_integer('Enter incident ID: ', id_lists['incident'])
             oper_args = [' '.join(query_list.get('DMLQueries').get(user_choice.name)), oper_incident_id]
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}. User ID = {oper_incident_id}'
+            oper_status = f'   {user_choice.value[0]}. Incident ID = {oper_incident_id}'
         elif user_choice == DMLQueries.fetch_all_active_incidents:
             oper_args.append(' '.join(query_list.get('DMLQueries').get(user_choice.name)))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}'
+            oper_status = f'   {user_choice.value[0]}'
         elif user_choice == DMLQueries.add_user:
             oper_profile_id = max(id_lists["profile"]) + 1
             oper_user_id = max(id_lists["user"]) + 1
@@ -323,7 +329,7 @@ if __name__ == '__main__':
             id_lists["user"].append(oper_user_id)
             oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_user_by_id')), oper_user_id]
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}'
+            oper_status = f'   {user_choice.value[0]}'
         elif user_choice == DMLQueries.update_user_by_id:
             oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
             oper_args.extend([' '.join(query_list.get('DMLQueries').get('fetch_user_by_id')), oper_user_id])
@@ -345,14 +351,14 @@ if __name__ == '__main__':
             database_manipulation(execute_script, (sql_query,))
             oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_user_by_id')), oper_user_id]
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}. User ID = {oper_user_id}\nIt was:\n{data}\nIt became:'
+            oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}\nIt was:\n{data}\nIt became:'
         elif user_choice == DMLQueries.del_user:
             oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
             sql_query = ' '.join(query_list.get('DMLQueries').get(user_choice.name))
             sql_query = sql_query.replace("user_id = ?;", f"user_id = {oper_user_id};")
             oper_args = [sql_query]
             oper_func = execute_script
-            oper_status = f'   {user_choice.value[1]}. User ID = {oper_user_id}'
+            oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}'
         elif user_choice == DMLQueries.subscribe_service_by_id:
             oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
             oper_service_id = input_integer('Enter service ID: ', id_lists['service'])
@@ -363,7 +369,7 @@ if __name__ == '__main__':
                                           f"VALUES ({oper_user_id}, {oper_service_id})")
             oper_args = [sql_query]
             oper_func = execute_script
-            oper_status = f'   {user_choice.value[1]}. User ID = {oper_user_id}, Service ID = {oper_service_id}'
+            oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}, Service ID = {oper_service_id}'
         elif user_choice == DMLQueries.unsubscribe_service_by_id:
             oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
             oper_service_id = input_integer('Enter service ID: ', id_lists['service'])
@@ -372,29 +378,30 @@ if __name__ == '__main__':
                                           f"user_id = {oper_user_id} AND service_id = {oper_service_id}")
             oper_args = [sql_query]
             oper_func = execute_script
-            oper_status = f'   {user_choice.value[1]}. User ID = {oper_user_id}, Service ID = {oper_service_id}'
+            oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}, Service ID = {oper_service_id}'
         elif user_choice == DMLQueries.create_incident:
             oper_incident_id = max(id_lists["incident"]) + 1
-            service_name_list = get_id_list(database_manipulation(select_data, ("SELECT serviceName FROM service;",)))
+            service_name_list = get_field_list(
+                database_manipulation(select_data, (query_list.get('service').get('get_serviceNames'),)))
             sql_query = ' '.join(query_list.get('DMLQueries').get(user_choice.name))
-            data = database_manipulation(add_new_records, (sql_query, (oper_incident_id,
-                                                                       choice(service_name_list),
-                                                                       choice([0, 1]), fake.paragraph(nb_sentences=3),
-                                                                       choice(id_lists['user']))))
+            data = database_manipulation(add_new_records, (sql_query, ((oper_incident_id,
+                                                                        choice(service_name_list),
+                                                                        1,
+                                                                        fake.paragraph(nb_sentences=3),
+                                                                        choice(id_lists['user'])),)))
             id_lists["incident"].append(oper_incident_id)
             oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_incident_by_id')), oper_incident_id]
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}. Incident ID = {oper_incident_id}'
+            oper_status = f'   {user_choice.value[0]}. Incident ID = {oper_incident_id}'
         elif user_choice == DMLQueries.close_incident:
             oper_incident_id = input_integer('Enter incident ID: ', id_lists['incident'])
             sql_query = ' '.join(query_list.get('DMLQueries').get(user_choice.name))
             sql_query = sql_query.replace("incident_id = ?", f"incident_id = {oper_incident_id}")
-# TODO проверить все функции для инцидентов
-# TODO реорганизовать основной цикл
-# TODO реализовать разделение прав для ролей
+            # TODO реорганизовать основной цикл
             database_manipulation(execute_script, (sql_query,))
+            oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_incident_by_id')), oper_incident_id]
             oper_func = select_data
-            oper_status = f'   {user_choice.value[1]}. Incident ID = {oper_incident_id}'
+            oper_status = f'   {user_choice.value[0]}. Incident ID = {oper_incident_id}'
         elif user_choice == DMLQueries.exit:
             break
         data = database_manipulation(oper_func, tuple(oper_args))

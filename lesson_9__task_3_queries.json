@@ -71,7 +71,8 @@
       "(serviceName, isActive, serviseMonthPrice, customerId)",
       "VALUES (?, ?, ?, ?);"
     ],
-    "get_ids": "SELECT service_id FROM service;"
+    "get_ids": "SELECT service_id FROM service;",
+    "get_serviceNames": "SELECT serviceName FROM service;"
   },
   "user_services": {
     "create": [
@@ -110,9 +111,9 @@
       "JOIN incident ON user.user_id = incident.incident_id"
     ],
     "fetch_incident_by_id": [
-      "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
-      "FROM user",
-      "JOIN incident ON user.user_id = incident.incident_id",
+      "SELECT incident.incident_id, user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
+      "FROM incident",
+      "JOIN user ON user.user_id = incident.user_id",
       "WHERE incident.incident_id = (?)"
     ],
     "fetch_all_active_incidents": [
