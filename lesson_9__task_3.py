@@ -63,6 +63,7 @@ import json
 from pprint import pprint
 from faker import Faker
 from random import choice, random, randint
+from collections import namedtuple
 
 TABLE_ORDER = ('user_role', 'user', 'profile', 'service', 'user_services', 'incident')
 
@@ -81,21 +82,47 @@ class Roles(enum.Enum):
     EXIT = ('EXIT', [])
 
 
+DMLQueriesValues = namedtuple('DMLQueriesValues', ['menu_item', 'report', 'roles'])
+
+
 class DMLQueries(enum.Enum):
-    fetch_all_users = ('Display a list of all users with all dependencies', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    fetch_user_by_id = ('Display user by id with all dependencies', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    fetch_all_incidents = ('Display a list of all incidents and associated users', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    fetch_incident_by_id = ('Display incident by id', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    fetch_all_active_incidents = (
-        'Display a list of all active incidents and associated users', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    add_user = ('Create a new user with a profile', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    update_user_by_id = ('Update user data by id with profile', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    del_user = ('Delete user by id with all dependencies', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    subscribe_service_by_id = ('Subscribe to the service by id', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
-    unsubscribe_service_by_id = ('Unsubscribe from the service by id', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
-    create_incident = ('Create an incident (ticket)', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
-    close_incident = ('Set incident status as completed', [Roles.ADMIN, Roles.SUPER_ADMIN])
-    exit = ('Exit', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER])
+    fetch_all_users = (DMLQueriesValues('Display a list of all users with all dependencies',
+                                        'List of all users with all dependencies:',
+                                        [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    fetch_user_by_id = (DMLQueriesValues('Display user by id with all dependencies',
+                                         'User data with ID = 1? with all dependencies:',
+                                         [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    fetch_all_incidents = (DMLQueriesValues('Display a list of all incidents with associated users',
+                                            'List of all incidents with associated users:',
+                                            [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    fetch_incident_by_id = (DMLQueriesValues('Display incident by id',
+                                             'Incident data with ID = 1?:',
+                                             [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    fetch_all_active_incidents = (DMLQueriesValues('Display a list of all active incidents with associated users',
+                                                   'List of all active incidents with associated users:',
+                                                   [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    add_user = (DMLQueriesValues('Create a new user with a profile',
+                                 'A new user with ID = 1? with a profile created:',
+                                 [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    update_user_by_id = (DMLQueriesValues('Update user data by id with profile',
+                                          'User data with ID = (?) and profile updated:',
+                                          [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    del_user = (DMLQueriesValues('Delete user by id with all dependencies',
+                                 'User with ID = (?) and with all dependencies deleted',
+                                 [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    subscribe_service_by_id = (DMLQueriesValues('Subscribe user by id to the service by id',
+                                                'User with ID = (1) subscribed to the service with ID = (2)',
+                                                [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER]))
+    unsubscribe_service_by_id = (DMLQueriesValues('Unsubscribe user by id from the service by id',
+                                                  'User with ID = (1) unsubscribed from the service with ID = (2)',
+                                                  [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER]))
+    create_incident = (DMLQueriesValues('Create an incident (ticket)',
+                                        'Incident (ticket) with ID = (?) created',
+                                        [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER]))
+    close_incident = (DMLQueriesValues('Set incident (ticket) status as completed',
+                                       'Incident (ticket) with ID = (?) completed',
+                                       [Roles.ADMIN, Roles.SUPER_ADMIN]))
+    exit = (DMLQueriesValues('Exit', '', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER]))
 
 
 def database_manipulation(func, args: tuple):
@@ -250,16 +277,26 @@ def user_menu(header: str, items: enum.EnumMeta, role_to_display: enum.Enum = No
         print(header)
         number = 1
         for item in items:
-            if all([role_to_display is not None, item.value[1]]):
-                if role_to_display not in item.value[1]:
+            if all([role_to_display is not None, item.value.roles]):
+                if role_to_display not in item.value.roles:
                     continue
-            print(f'{str(number).rjust(2, " ")}. {item.value[0]}')
+            print(f'{str(number).rjust(2, " ")}. {item.value.menu_item}')
             display_menu_items.append(item)
             number += 1
         print()
-        item_choice = input_integer('Enter your choice: ', list(range(1, number + 1)))
+        item_choice = input_integer('Enter your choice: ', list(range(1, number)))
         result = display_menu_items[item_choice - 1]
         return result
+
+
+def get_dml_query(name: str) -> str:
+    return ' '.join(query_list.get('DMLQueries').get(name))
+
+
+def make_replacements(source_string: str, replacements: dict) -> str:
+    for old_str, new_str in replacements.items():
+        source_string = source_string.replace(old_str, new_str)
+    return source_string
 
 
 if __name__ == '__main__':
@@ -281,58 +318,72 @@ if __name__ == '__main__':
                 'incident': get_field_list(
                     database_manipulation(select_data, (query_list.get('incident').get('get_ids'),)))}
 
-    user_role = user_menu('\n   Select your database role: ', Roles)
+    # user_role = user_menu('\n   Select your database role: ', Roles)
+    user_role = Roles.ADMIN
+
     if user_role == Roles.EXIT:
         exit(0)
     oper_args = []
+    oper_replacements = {}
     while True:
-        user_choice = user_menu('\n   Select operation: ', DMLQueries, user_role)
+        user_choice = user_menu('\n    Select operation: ', DMLQueries, user_role)
         oper_args.clear()
+        oper_replacements.clear()
         oper_func = None
         oper_status = ''
         if user_choice == DMLQueries.fetch_all_users:
-            oper_args.append(' '.join(query_list.get('DMLQueries').get(user_choice.name)))
+            oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[0]}'
+            oper_status = make_replacements(user_choice.value.report, oper_replacements)
         elif user_choice == DMLQueries.fetch_user_by_id:
-            oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
-            oper_args = [' '.join(query_list.get('DMLQueries').get(user_choice.name)), oper_user_id]
+            oper_replacements['1?'] = str(input_integer('Enter user ID: ', id_lists['user']))
+            oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}'
+            oper_status = make_replacements(user_choice.value.report, oper_replacements)
         elif user_choice == DMLQueries.fetch_all_incidents:
-            oper_args.append(' '.join(query_list.get('DMLQueries').get(user_choice.name)))
+            oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[0]}'
+            oper_status = make_replacements(user_choice.value.report, oper_replacements)
         elif user_choice == DMLQueries.fetch_incident_by_id:
-            oper_incident_id = input_integer('Enter incident ID: ', id_lists['incident'])
-            oper_args = [' '.join(query_list.get('DMLQueries').get(user_choice.name)), oper_incident_id]
+            oper_replacements['1?'] = str(input_integer('Enter incident ID: ', id_lists['incident']))
+            oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[0]}. Incident ID = {oper_incident_id}'
+            oper_status = make_replacements(user_choice.value.report, oper_replacements)
         elif user_choice == DMLQueries.fetch_all_active_incidents:
-            oper_args.append(' '.join(query_list.get('DMLQueries').get(user_choice.name)))
+            oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
             oper_func = select_data
-            oper_status = f'   {user_choice.value[0]}'
+            oper_status = make_replacements(user_choice.value.report, oper_replacements)
         elif user_choice == DMLQueries.add_user:
-            oper_profile_id = max(id_lists["profile"]) + 1
-            oper_user_id = max(id_lists["user"]) + 1
-            sql_query = ' '.join(query_list.get('DMLQueries').get(user_choice.name))
-            sql_query = sql_query.replace("VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                          f"VALUES ({oper_profile_id}, '{fake.first_name()}', "
-                                          f"'{fake.last_name()}', '{fake.email()}', "
-                                          f"'{fake.phone_number()}', '{fake.postcode()}', {oper_user_id})")
-            sql_query = sql_query.replace("VALUES (?, ?, ?, ?)",
-                                          f"VALUES ({oper_user_id}, '{fake.user_name()}', "
-                                          f"'{fake.password(length=choice(range(7, 12)), special_chars=False)}', "
-                                          f"{choice(id_lists['user_role'])})")
-            data = database_manipulation(execute_script, (sql_query,))
-            id_lists["profile"].append(oper_profile_id)
-            id_lists["user"].append(oper_user_id)
-            oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_user_by_id')), oper_user_id]
+            # TODO здесь остановилась реконстукция
+            oper_replacements.update({'1?': str(max(id_lists["profile"]) + 1), '2?': f'"{fake.first_name()}"',
+                                      '3?': f'"{fake.last_name()}"', '4?': fake.email(), '5?': fake.phone_number(),
+                                      '6?': fake.postcode(), '7?': str(max(id_lists["user"]) + 1),
+                                      '8?': str(max(id_lists["user"]) + 1), '9?': fake.user_name(),
+                                      '10?': fake.password(length=choice(range(7, 12)), special_chars=False),
+                                      '11?': str(choice(id_lists['user_role']))})
+            # oper_profile_id = max(id_lists["profile"]) + 1
+            # oper_user_id = max(id_lists["user"]) + 1
+            # sql_query = ' '.join(query_list.get('DMLQueries').get(user_choice.name))
+            # sql_query = sql_query.replace("VALUES (1?, 2?, 3?, 4?, 5?, 6?, 7?)",
+            #                               f"VALUES ({oper_profile_id}, '{fake.first_name()}', "
+            #                               f"'{fake.last_name()}', '{fake.email()}', "
+            #                               f"'{fake.phone_number()}', '{fake.postcode()}', {oper_user_id})")
+            # sql_query = sql_query.replace("VALUES (8?, 9?, 10?, 11?)",
+            #                               f"VALUES ({oper_user_id}, '{fake.user_name()}', "
+            #                               f"'{fake.password(length=choice(range(7, 12)), special_chars=False)}', "
+            #                               f"{choice(id_lists['user_role'])})")
+            oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
+            data = database_manipulation(execute_script, tuple(oper_args))
+            oper_replacements['1?'] = str(max(id_lists["user"]) + 1)
+            oper_args = make_replacements(get_dml_query(DMLQueries.fetch_user_by_id.name), oper_replacements)
             oper_func = select_data
-            oper_status = f'   {user_choice.value[0]}'
+            oper_status = make_replacements(user_choice.value.report, oper_replacements)
+            id_lists["user"].append(max(id_lists["user"]) + 1)
+            id_lists["profile"].append(max(id_lists["profile"]) + 1)
         elif user_choice == DMLQueries.update_user_by_id:
             oper_user_id = input_integer('Enter user ID: ', id_lists['user'])
-            oper_args.extend([' '.join(query_list.get('DMLQueries').get('fetch_user_by_id')), oper_user_id])
+            oper_args.extend([' '.join(query_list.get('DMLQueries').get(DMLQueries.fetch_user_by_id.name)),
+                              oper_user_id])
             data = database_manipulation(select_data, tuple(oper_args))[0]
             sql_query = ' '.join(query_list.get('DMLQueries').get(user_choice.name))
             sql_query = sql_query.replace(
@@ -349,7 +400,7 @@ if __name__ == '__main__':
             sql_query = sql_query.replace("WHERE user_id = ?;", f"WHERE user_id = {data[0]};")
             oper_args.append(sql_query)
             database_manipulation(execute_script, (sql_query,))
-            oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_user_by_id')), oper_user_id]
+            oper_args = [' '.join(query_list.get('DMLQueries').get(DMLQueries.fetch_user_by_id.name)), oper_user_id]
             oper_func = select_data
             oper_status = f'   {user_choice.value[0]}. User ID = {oper_user_id}\nIt was:\n{data}\nIt became:'
         elif user_choice == DMLQueries.del_user:
@@ -390,7 +441,8 @@ if __name__ == '__main__':
                                                                         fake.paragraph(nb_sentences=3),
                                                                         choice(id_lists['user'])),)))
             id_lists["incident"].append(oper_incident_id)
-            oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_incident_by_id')), oper_incident_id]
+            oper_args = [' '.join(query_list.get('DMLQueries').get(DMLQueries.fetch_incident_by_id.name)),
+                         oper_incident_id]
             oper_func = select_data
             oper_status = f'   {user_choice.value[0]}. Incident ID = {oper_incident_id}'
         elif user_choice == DMLQueries.close_incident:
@@ -399,7 +451,8 @@ if __name__ == '__main__':
             sql_query = sql_query.replace("incident_id = ?", f"incident_id = {oper_incident_id}")
             # TODO реорганизовать основной цикл
             database_manipulation(execute_script, (sql_query,))
-            oper_args = [' '.join(query_list.get('DMLQueries').get('fetch_incident_by_id')), oper_incident_id]
+            oper_args = [' '.join(query_list.get('DMLQueries').get(DMLQueries.fetch_incident_by_id.name)),
+                         oper_incident_id]
             oper_func = select_data
             oper_status = f'   {user_choice.value[0]}. Incident ID = {oper_incident_id}'
         elif user_choice == DMLQueries.exit:

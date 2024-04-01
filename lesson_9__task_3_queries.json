@@ -103,7 +103,7 @@
       "FROM user",
       "JOIN user_role ON user_role.user_role_id = user.user_role_id",
       "JOIN profile ON profile.user_id = user.user_id",
-      "WHERE user.user_id = (?)"
+      "WHERE user.user_id = 1?"
     ],
     "fetch_all_incidents": [
       "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
@@ -114,7 +114,7 @@
       "SELECT incident.incident_id, user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
       "FROM incident",
       "JOIN user ON user.user_id = incident.user_id",
-      "WHERE incident.incident_id = (?)"
+      "WHERE incident.incident_id = 1?"
     ],
     "fetch_all_active_incidents": [
       "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
@@ -125,10 +125,10 @@
     "add_user": [
       "INSERT INTO profile",
       "(profile_id, firstName, lastName, email, phoneNumber, postalCode, user_id)",
-      "VALUES (?, ?, ?, ?, ?, ?, ?);",
+      "VALUES (1?, 2?, 3?, 4?, 5?, 6?, 7?);",
       "INSERT INTO user",
       "(user_id, user_name, password, user_role_id)",
-      "VALUES (?, ?, ?, ?);"
+      "VALUES (8?, 9?, 10?, 11?);"
     ],
     "update_user_by_id": [
       "UPDATE profile",
