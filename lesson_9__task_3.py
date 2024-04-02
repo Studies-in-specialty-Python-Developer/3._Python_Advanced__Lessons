@@ -102,7 +102,7 @@ class DMLQueries(enum.Enum):
                                                    'List of all active incidents with associated users:',
                                                    [Roles.ADMIN, Roles.SUPER_ADMIN]))
     add_user = (DMLQueriesValues('Create a new user with a profile',
-                                 'A new user with ID = 1? with a profile created:',
+                                 'A new user with ID = 7? with a profile created:',
                                  [Roles.ADMIN, Roles.SUPER_ADMIN]))
     update_user_by_id = (DMLQueriesValues('Update user data by id with profile',
                                           'User data with ID = (?) and profile updated:',
@@ -355,11 +355,12 @@ if __name__ == '__main__':
             oper_status = make_replacements(user_choice.value.report, oper_replacements)
         elif user_choice == DMLQueries.add_user:
             # TODO здесь остановилась реконстукция
-            oper_replacements.update({'1?': str(max(id_lists["profile"]) + 1), '2?': f'"{fake.first_name()}"',
-                                      '3?': f'"{fake.last_name()}"', '4?': fake.email(), '5?': fake.phone_number(),
-                                      '6?': fake.postcode(), '7?': str(max(id_lists["user"]) + 1),
-                                      '8?': str(max(id_lists["user"]) + 1), '9?': fake.user_name(),
-                                      '10?': fake.password(length=choice(range(7, 12)), special_chars=False),
+            oper_replacements.update({'1?': str(max(id_lists["profile"]) + 1), '2?': f"'{fake.first_name()}'",
+                                      '3?': f"'{fake.last_name()}'", '4?': f"'{fake.email()}'",
+                                      '5?': f"'{fake.phone_number()}'",
+                                      '6?': f"'{fake.postcode()}'", '7?': str(max(id_lists["user"]) + 1),
+                                      '8?': str(max(id_lists["user"]) + 1), '9?': f"'{fake.user_name()}'",
+                                      '10?': f"'{fake.password(length=choice(range(7, 12)), special_chars=False)}'",
                                       '11?': str(choice(id_lists['user_role']))})
             # oper_profile_id = max(id_lists["profile"]) + 1
             # oper_user_id = max(id_lists["user"]) + 1
@@ -374,7 +375,6 @@ if __name__ == '__main__':
             #                               f"{choice(id_lists['user_role'])})")
             oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
             data = database_manipulation(execute_script, tuple(oper_args))
-            oper_replacements['1?'] = str(max(id_lists["user"]) + 1)
             oper_args = make_replacements(get_dml_query(DMLQueries.fetch_user_by_id.name), oper_replacements)
             oper_func = select_data
             oper_status = make_replacements(user_choice.value.report, oper_replacements)
