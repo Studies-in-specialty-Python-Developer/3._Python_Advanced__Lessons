@@ -140,25 +140,25 @@
     ],
     "del_user": [
       "PRAGMA foreign_keys = ON;",
-      "DELETE FROM user WHERE user_id = ?;"
+      "DELETE FROM user WHERE user_id = 1?;"
     ],
     "subscribe_service_by_id": [
-      "DELETE FROM user_services WHERE user_id = ? AND service_id = ?;",
+      "DELETE FROM user_services WHERE user_id = 1? AND service_id = 2?;",
       "INSERT INTO user_services",
       "(user_id, service_id)",
-      "VALUES (?, ?);"
+      "VALUES (1?, 2?);"
     ],
     "unsubscribe_service_by_id": [
-      "DELETE FROM user_services WHERE user_id = ? AND service_id = ?;"
+      "DELETE FROM user_services WHERE user_id = 1? AND service_id = 2?;"
     ],
     "create_incident": [
       "INSERT INTO incident",
       "(incident_id, serviceName, isActive, problemDescription, user_id)",
-      "VALUES (?, ?, ?, ?, ?);"
+      "VALUES (1?, 2?, 3?, 4?, 5?);"
     ],
     "close_incident": [
       "UPDATE incident SET isActive = 0",
-      "WHERE incident.incident_id = ?;"
+      "WHERE incident.incident_id = 1?;"
     ]
   }
 }
