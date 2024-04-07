@@ -132,11 +132,11 @@
     ],
     "update_user_by_id": [
       "UPDATE profile",
-      "SET firstName = ?, lastName = ?, email = ?, phoneNumber = ?, postalCode = ?",
-      "WHERE profile_id = ?;",
+      "SET firstName = 1?, lastName = 2?, email = 3?, phoneNumber = 4?, postalCode = 5?",
+      "WHERE profile_id = 6?;",
       "UPDATE user",
-      "SET user_name = ?, password = ?, user_role_id = ?",
-      "WHERE user_id = ?;"
+      "SET user_name = 7?, password = 8?, user_role_id = 9?",
+      "WHERE user_id = 10?;"
     ],
     "del_user": [
       "PRAGMA foreign_keys = ON;",
