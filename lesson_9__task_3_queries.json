@@ -106,7 +106,7 @@
       "WHERE user.user_id = 1?"
     ],
     "fetch_all_incidents": [
-      "SELECT user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
+      "SELECT incident.incident_id, user.user_name, incident.serviceName, incident.isActive, incident.problemDescription",
       "FROM user",
       "JOIN incident ON user.user_id = incident.incident_id"
     ],
@@ -156,7 +156,7 @@
       "(incident_id, serviceName, isActive, problemDescription, user_id)",
       "VALUES (1?, 2?, 3?, 4?, 5?);"
     ],
-    "close_incident": [
+    "close_incident_by_id": [
       "UPDATE incident SET isActive = 0",
       "WHERE incident.incident_id = 1?;"
     ]
