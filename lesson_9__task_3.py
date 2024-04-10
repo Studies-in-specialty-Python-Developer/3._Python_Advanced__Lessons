@@ -65,8 +65,10 @@ from faker import Faker
 from random import choice, random, randint
 from collections import namedtuple
 
+# Порядок создания таблиц в БД, необходим для корректного создания внешних ключей
 TABLE_ORDER = ('user_role', 'user', 'profile', 'service', 'user_services', 'incident')
 
+# Количества сущностей в таблицах при автоматической генерации тестовых данных
 QUANTITIES = {
     'user': 20,
     'user_role': 3,
@@ -74,73 +76,102 @@ QUANTITIES = {
     'incident': 50,
 }
 
+# Кортеж содержит значения констант для выбора роли пользователя: отображаемая строка в меню
+RolesValues = namedtuple('RolesValues', ['menu_item'])
+
 
 class Roles(enum.Enum):
-    USER = ('USER', [])
-    ADMIN = ('ADMIN', [])
-    SUPER_ADMIN = ('SUPER ADMIN', [])
-    EXIT = ('EXIT', [])
+    """ Класс перечисляет роли пользователей базы данных
+        роль EXIT добавлена для возможности выхода из программы при автоматическом создании меню выбора ролей
+        value в виде кортежа для совместимости со структурой списка команд DMLQueriesValues. Эта структура
+        используется при автоматическом создании меню выбора
+    """
+    USER = RolesValues('USER')
+    ADMIN = RolesValues('ADMIN')
+    SUPER_ADMIN = RolesValues('SUPER ADMIN')
+    EXIT = RolesValues('EXIT')
 
 
+# Кортеж содержит значения констант для запросов к БД: отображаемая строка в меню, отчет о выполнении запроса,
+# допустимые роли пользователей, функция для выполнения запроса.
 DMLQueriesValues = namedtuple('DMLQueriesValues', ['menu_item', 'report', 'roles', 'oper_func'])
 
 
 def select_data(args: tuple):
-    # args[0] - sqlite3.Cursor object
-    # args[1] - SQL query string
+    """ Формирует запрос на выборку данных из БД
+    Структура списка аргументов:
+        args[0] - sqlite3.Cursor object
+        args[1] - SQL query string
+        args[2:] - query parameters (if any)
+    Returns:
+        list of tuples with fetched data
+    """
     args[0].execute(args[1], args[2:])
     return args[0].fetchall()
 
 
 def execute_script(args: tuple):
-    # args[0] - sqlite3.Cursor object
-    # args[1] - SQL script string
+    """ Формирует запрос на изменение, добавление, удаление данных из БД
+    Структура списка аргументов:
+        args[0] - sqlite3.Cursor object
+        args[1] - SQL query string
+    """
     args[0].execute("BEGIN TRANSACTION;")
     args[0].executescript(args[1])
     return True
 
 
 class DMLQueries(enum.Enum):
-    fetch_all_users = (DMLQueriesValues('Display a list of all users with all dependencies',
-                                        'List of all users with all dependencies:',
-                                        [Roles.ADMIN, Roles.SUPER_ADMIN], select_data))
-    fetch_user_by_id = (DMLQueriesValues('Display user by id with all dependencies',
-                                         'User data with ID = 1? with all dependencies:',
-                                         [Roles.ADMIN, Roles.SUPER_ADMIN], select_data))
-    fetch_all_incidents = (DMLQueriesValues('Display a list of all incidents with associated users',
-                                            'List of all incidents with associated users:',
-                                            [Roles.ADMIN, Roles.SUPER_ADMIN], select_data))
-    fetch_incident_by_id = (DMLQueriesValues('Display incident by id',
-                                             'Incident data with ID = 1?:',
-                                             [Roles.ADMIN, Roles.SUPER_ADMIN], select_data))
-    fetch_all_active_incidents = (DMLQueriesValues('Display a list of all active incidents with associated users',
-                                                   'List of all active incidents with associated users:',
-                                                   [Roles.ADMIN, Roles.SUPER_ADMIN], select_data))
-    add_user = (DMLQueriesValues('Create a new user with a profile',
-                                 'A new user with ID = 7? with a profile created:',
-                                 [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script))
-    update_user_by_id = (DMLQueriesValues('Update user data by id with profile',
-                                          'User data with ID = 10? with profile updated:',
-                                          [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script))
-    del_user = (DMLQueriesValues('Delete user by id with all dependencies',
-                                 'User with ID = 1? and with all dependencies deleted',
-                                 [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script))
-    subscribe_service_by_id = (DMLQueriesValues('Subscribe user by id to the service by id',
-                                                'User with ID = 1? subscribed to the service with ID = 2?',
-                                                [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], execute_script))
-    unsubscribe_service_by_id = (DMLQueriesValues('Unsubscribe user by id from the service by id',
-                                                  'User with ID = 1? unsubscribed from the service with ID = 2?',
-                                                  [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], execute_script))
-    create_incident = (DMLQueriesValues('Create an incident (ticket)',
-                                        'Incident (ticket) with ID = 1? created',
-                                        [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], execute_script))
-    close_incident_by_id = (DMLQueriesValues('Set incident (ticket) status as completed',
-                                             'Incident (ticket) with ID = 1? completed',
-                                             [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script))
-    exit = (DMLQueriesValues('Exit', '', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], None))
+    """ Класс перечисляет список команд для добавления, удаления, выборки, изменения данных в БД
+        команда exit добавлена для возможности выхода из программы при автоматическом создании меню выбора команды
+    """
+    fetch_all_users = DMLQueriesValues('Display a list of all users with all dependencies',
+                                       'List of all users with all dependencies:',
+                                       [Roles.ADMIN, Roles.SUPER_ADMIN], select_data)
+    fetch_user_by_id = DMLQueriesValues('Display user by id with all dependencies',
+                                        'User data with ID = 1? with all dependencies:',
+                                        [Roles.ADMIN, Roles.SUPER_ADMIN], select_data)
+    fetch_all_incidents = DMLQueriesValues('Display a list of all incidents with associated users',
+                                           'List of all incidents with associated users:',
+                                           [Roles.ADMIN, Roles.SUPER_ADMIN], select_data)
+    fetch_incident_by_id = DMLQueriesValues('Display incident by id',
+                                            'Incident data with ID = 1?:',
+                                            [Roles.ADMIN, Roles.SUPER_ADMIN], select_data)
+    fetch_all_active_incidents = DMLQueriesValues('Display a list of all active incidents with associated users',
+                                                  'List of all active incidents with associated users:',
+                                                  [Roles.ADMIN, Roles.SUPER_ADMIN], select_data)
+    add_user = DMLQueriesValues('Create a new user with a profile',
+                                'A new user with ID = 7? with a profile created:',
+                                [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script)
+    update_user_by_id = DMLQueriesValues('Update user data by id with profile',
+                                         'User data with ID = 10? with profile updated:',
+                                         [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script)
+    del_user = DMLQueriesValues('Delete user by id with all dependencies',
+                                'User with ID = 1? and with all dependencies deleted',
+                                [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script)
+    subscribe_service_by_id = DMLQueriesValues('Subscribe user by id to the service by id',
+                                               'User with ID = 1? subscribed to the service with ID = 2?',
+                                               [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], execute_script)
+    unsubscribe_service_by_id = DMLQueriesValues('Unsubscribe user by id from the service by id',
+                                                 'User with ID = 1? unsubscribed from the service with ID = 2?',
+                                                 [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], execute_script)
+    create_incident = DMLQueriesValues('Create an incident (ticket)',
+                                       'Incident (ticket) with ID = 1? created',
+                                       [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], execute_script)
+    close_incident_by_id = DMLQueriesValues('Set incident (ticket) status as completed',
+                                            'Incident (ticket) with ID = 1? completed',
+                                            [Roles.ADMIN, Roles.SUPER_ADMIN], execute_script)
+    exit = DMLQueriesValues('Exit', '', [Roles.ADMIN, Roles.SUPER_ADMIN, Roles.USER], None)
 
 
 def database_manipulation(func, args: tuple):
+    """ Выполняет заданную функцию с заданными аргументами
+    Arguments:
+        func: исполняемая функция
+        args: кортеж аргументов
+    Returns:
+        результат выполнения функции """
+
     sqlite_connection = None
     result = None
     try:
@@ -166,15 +197,25 @@ def database_manipulation(func, args: tuple):
 
 
 def add_new_records(args: tuple):
-    # args[0] - sqlite3.Cursor object
-    # args[1] - SQL query string
-    # args[2] - values
+    """ Добавляет новые записи в таблицу БД
+    Arguments:
+        args: список аргументов, структура списка:
+            args[0] - sqlite3.Cursor object
+            args[1] - SQL query string
+            args[2] - values
+    Returns:
+        True """
     args[0].execute("BEGIN TRANSACTION;")
     args[0].executemany(args[1], args[2])
     return True
 
 
 def get_field_list(list_of_tuples: list) -> list:
+    """ Извлекает первый список из возвращаемого кортежа после выполнения запроса на выборку данных
+    Arguments:
+        list_of_tuples: кортеж, возвращаемый методом fetch...
+    Returns:
+        первый список из кортежа"""
     if list_of_tuples:
         return [element[0] for element in list_of_tuples]
     else:
@@ -182,6 +223,10 @@ def get_field_list(list_of_tuples: list) -> list:
 
 
 def database_initialization(queries: dict):
+    """ Создает в БД необходимые таблицы, заполняет их тестовыми данными и задает значения внешних ключей таблиц
+    Arguments:
+        queries: список соответствующих запросов """
+
     database_manipulation(execute_script, ("PRAGMA foreign_keys = ON;",))
 
     # Создание таблиц в базе данных
@@ -257,6 +302,12 @@ def database_initialization(queries: dict):
 
 
 def input_integer(input_str: str, valid_values: list) -> int:
+    """ Ввод целого числа с валидацией значения
+    Arguments:
+        input_str (str): текстовая метка
+        valid_values (list): список допустимых значений
+    Returns:
+        int - введенное значение """
     result = None
     while result is None:
         try:
@@ -270,14 +321,21 @@ def input_integer(input_str: str, valid_values: list) -> int:
     return result
 
 
-def user_menu(header: str, items: enum.EnumMeta, role_to_display: enum.Enum = None):
+def user_menu(header: str, items: enum.EnumMeta, role_to_display: enum.Enum = None) -> enum.Enum:
+    """ Создает меню в консоли и обрабатывает выбор пользователя с проверкой корректности введенного значения
+    Arguments:
+        header (str): заголовок меню
+        items (enum.EnumMeta): список пунктов меню
+        role_to_display (enum.Enum): определяет доступные действия для заданной роли пользователя
+    Returns:
+        enum.Enum - выбранное действие """
     result = None
     display_menu_items = []
     while result is None:
         print(header)
         number = 1
         for item in items:
-            if all([role_to_display is not None, item.value.roles]):
+            if role_to_display is not None and item.value.roles:
                 if role_to_display not in item.value.roles:
                     continue
             print(f'{str(number).rjust(2, " ")}. {item.value.menu_item}')
@@ -290,41 +348,45 @@ def user_menu(header: str, items: enum.EnumMeta, role_to_display: enum.Enum = No
 
 
 def get_dml_query(name: str) -> str:
+    """ Выбирает из списка запрос с соответствующим именем для заданного действия
+    Arguments:
+        name (str): имя действия
+    Returns:
+        str - строка запроса """
     return ' '.join(query_list.get('DMLQueries').get(name))
 
 
 def make_replacements(source_string: str, replacements: dict) -> str:
+    """ Производит замены шаблонов в строке запроса и в строке отчета на реальные значения
+    Arguments:
+        source_string (str): строка с шаблонами вместо значений
+        replacements (dict): словарь замен
+    Returns:
+        str - строка с реальными значениями вместо шаблонов """
     for old_str, new_str in replacements.items():
         source_string = source_string.replace(old_str, new_str)
     return source_string
 
 
 if __name__ == '__main__':
+
+    # Чтение запросов из файла
     with open('lesson_9__task_3_queries.json', 'r') as file:
         query_list = json.load(file)
+
+    # инициализация
     fake = Faker()
+    id_lists = dict.fromkeys(['user', 'user_role', 'profile', 'service', 'incident'])
+    database_initialization(query_list)
 
-    # id_lists = dict.fromkeys(['user', 'user_role', 'profile', 'service', 'incident'])
-    #
-    # database_initialization(query_list)
-
-    id_lists = {'user': get_field_list(database_manipulation(select_data, (query_list.get('user').get('get_ids'),))),
-                'user_role': get_field_list(
-                    database_manipulation(select_data, (query_list.get('user_role').get('get_ids'),))),
-                'profile': get_field_list(
-                    database_manipulation(select_data, (query_list.get('profile').get('get_ids'),))),
-                'service': get_field_list(
-                    database_manipulation(select_data, (query_list.get('service').get('get_ids'),))),
-                'incident': get_field_list(
-                    database_manipulation(select_data, (query_list.get('incident').get('get_ids'),)))}
-
-    # user_role = user_menu('\n   Select your database role: ', Roles)
-    user_role = Roles.ADMIN
-
+    # выбор роли пользователя
+    user_role = user_menu('\n   Select your database role: ', Roles)
     if user_role == Roles.EXIT:
         exit(0)
     oper_args = []
     oper_replacements = {}
+
+    # основной цикл работы с БД
     while True:
         user_choice = user_menu('\n    Select operation: ', DMLQueries, user_role)
         oper_args.clear()
@@ -335,6 +397,7 @@ if __name__ == '__main__':
         profile_id = None
         if user_choice == DMLQueries.exit:
             break
+
         # input parameters
         if user_choice in [DMLQueries.fetch_user_by_id,
                            DMLQueries.update_user_by_id,
@@ -380,13 +443,17 @@ if __name__ == '__main__':
                                               '9?': str(choice(id_lists['user_role'])), '10?': str(user_id)})
                     oper_replacements = dict(sorted(oper_replacements.items(), key=lambda x: x[0]))
                 oper_args.clear()
+
         # function choice
         oper_func = user_choice.value.oper_func
+
         # set args and status
         oper_args.append(make_replacements(get_dml_query(user_choice.name), oper_replacements))
         oper_status = make_replacements(user_choice.value.report, oper_replacements)
+
         # databse manipulation
         data = database_manipulation(oper_func, tuple(oper_args))
+
         # post checking
         if user_choice == DMLQueries.add_user:
             if data:
@@ -408,6 +475,7 @@ if __name__ == '__main__':
         if user_choice == DMLQueries.update_user_by_id:
             if not data:
                 oper_status = 'User data update error'
+
         # report
         print()
         print(oper_status)
