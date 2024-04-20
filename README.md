@@ -1,4 +1,4 @@
-# 3._Python_Advanced__Lessons
+# 4._Python_Advanced__Lessons
 
 This project contains tasks for independent work in the Python Advanced course. Since these are training assignments, 
 no error handling was used, and clean code rules were not followed.
