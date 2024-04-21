@@ -1,7 +1,16 @@
 """ Урок 1, завдання 2
-Створіть список цілих чисел. Отримайте список квадратів непарних чисел із цього списку.
+Напишіть декоратор, який буде заміряти час виконання для наданої функції.
 """
 
-integers = list(range(-10, 10, 1))
-squares = [x ** 2 for x in filter(lambda x: x % 2 != 0, integers)]
-print(squares)
+import time
+
+
+def stopwatch(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f'Function {func.__name__} executes in {end - start} seconds')
+        return result
+
+    return wrapper

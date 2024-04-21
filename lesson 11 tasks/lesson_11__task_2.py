@@ -1,4 +1,4 @@
-""" Урок 9, завдання 2
+""" Урок 11, завдання 2
 Розробити програму, що реалізує довідник працівника відділу кадрів.
 Університет складається з факультетів, факультети мають у своєму складі
 кафедри та студентські групи. На кожній кафедрі є завідувач кафедри.
@@ -52,7 +52,7 @@ def database_manipulation(func, arg):
     sqlite_connection = None
     result = None
     try:
-        sqlite_connection = sqlite3.connect('lesson_9__task_2_HR_guide.sqlite')
+        sqlite_connection = sqlite3.connect('lesson_11__task_2_HR_guide.sqlite')
         cursor = sqlite_connection.cursor()
         full_arg = [cursor]
         full_arg.extend(arg)
@@ -100,7 +100,7 @@ def get_id_list(list_of_tuples: list) -> list:
     return [element[0] for element in list_of_tuples]
 
 
-with open('lesson_9__task_2_queries.json', 'r') as file:
+with open('lesson_11__task_2_queries.json', 'r') as file:
     queries = json.load(file)
 
 database_manipulation(execute_script, ("PRAGMA foreign_keys = ON;",))

@@ -1,4 +1,4 @@
-""" Урок 9, завдання 3
+""" Урок 11, завдання 3
 Спроєктувати БД згідно зі схемою та реалізувати відношення між
 сутностями за допомогою SQLite:
 4. Таблиця «user» – користувач сервісу. У користувача можуть бути ролі «USER»,
@@ -175,7 +175,7 @@ def database_manipulation(func, args: tuple):
     sqlite_connection = None
     result = None
     try:
-        sqlite_connection = sqlite3.connect('lesson_9__task_3_Services.sqlite')
+        sqlite_connection = sqlite3.connect('lesson_11__task_3_Services.sqlite')
         cursor = sqlite_connection.cursor()
         full_arg = [cursor]
         full_arg.extend(args)
@@ -371,7 +371,7 @@ def make_replacements(source_string: str, replacements: dict) -> str:
 if __name__ == '__main__':
 
     # Чтение запросов из файла
-    with open('lesson_9__task_3_queries.json', 'r') as file:
+    with open('lesson_11__task_3_queries.json', 'r') as file:
         query_list = json.load(file)
 
     # инициализация

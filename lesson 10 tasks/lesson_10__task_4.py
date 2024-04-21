@@ -1,4 +1,4 @@
-""" Урок 8, завдання 4
+""" Урок 10, завдання 4
 Витягти всі дані про книги (назва, ціна тощо) з сайту
 «https://alfavit.eu/index.php?route=product/category&path=_8» та зберегти у БД, де передбачити
 можливість зберігати ціну у €, $ та ₴.
@@ -15,7 +15,7 @@ def database_manipulation(func, arg):
     sqlite_connection = None
     result = None
     try:
-        sqlite_connection = sqlite3.connect('lesson_8__task_4_books.sqlite')
+        sqlite_connection = sqlite3.connect('lesson_10__task_4_books.sqlite')
         cursor = sqlite_connection.cursor()
         full_arg = [sqlite_connection, cursor]
         full_arg.extend(arg)
