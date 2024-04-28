@@ -61,9 +61,9 @@ import traceback
 import sqlite3
 import json
 from pprint import pprint
-from faker import Faker
 from random import choice, random, randint
 from collections import namedtuple
+from faker import Faker
 
 # Порядок создания таблиц в БД, необходим для корректного создания внешних ключей
 TABLE_ORDER = ('user_role', 'user', 'profile', 'service', 'user_services', 'incident')
@@ -173,7 +173,6 @@ def database_manipulation(func, args: tuple):
         результат выполнения функции """
 
     sqlite_connection = None
-    result = None
     try:
         sqlite_connection = sqlite3.connect('lesson_11__task_3_Services.sqlite')
         cursor = sqlite_connection.cursor()
@@ -193,7 +192,7 @@ def database_manipulation(func, args: tuple):
     finally:
         if sqlite_connection:
             sqlite_connection.close()
-        return result
+    return result
 
 
 def add_new_records(args: tuple):
@@ -217,9 +216,10 @@ def get_field_list(list_of_tuples: list) -> list:
     Returns:
         первый список из кортежа"""
     if list_of_tuples:
-        return [element[0] for element in list_of_tuples]
+        result = [element[0] for element in list_of_tuples]
     else:
-        return []
+        result = []
+    return result
 
 
 def database_initialization(queries: dict):
@@ -344,7 +344,7 @@ def user_menu(header: str, items: enum.EnumMeta, role_to_display: enum.Enum = No
         print()
         item_choice = input_integer('Enter your choice: ', list(range(1, number)))
         result = display_menu_items[item_choice - 1]
-        return result
+    return result
 
 
 def get_dml_query(name: str) -> str:
@@ -371,18 +371,18 @@ def make_replacements(source_string: str, replacements: dict) -> str:
 if __name__ == '__main__':
 
     # Чтение запросов из файла
-    with open('lesson_11__task_3_queries.json', 'r') as file:
+    with open('lesson_11__task_3_queries.json', 'r', encoding='utf-8') as file:
         query_list = json.load(file)
 
     # инициализация
     fake = Faker()
-    id_lists = dict.fromkeys(['user', 'user_role', 'profile', 'service', 'incident'])
+    id_lists = dict.fromkeys(['user', 'user_role', 'profile', 'service', 'incident'], [])
     database_initialization(query_list)
 
     # выбор роли пользователя
     user_role = user_menu('\n   Select your database role: ', Roles)
     if user_role == Roles.EXIT:
-        exit(0)
+        sys.exit(0)
     oper_args = []
     oper_replacements = {}
 

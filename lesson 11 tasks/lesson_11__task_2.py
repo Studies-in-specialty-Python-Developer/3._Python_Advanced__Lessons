@@ -30,8 +30,8 @@ import sys
 import traceback
 import sqlite3
 import json
-from faker import Faker
 from random import choice, choices
+from faker import Faker
 
 TABLE_ORDER = (
     'faculties', 'persons', 'students', 'relatives', 'teachers', 'students__relatives', 'chairs',
@@ -50,7 +50,6 @@ QUANTITIES = {
 
 def database_manipulation(func, arg):
     sqlite_connection = None
-    result = None
     try:
         sqlite_connection = sqlite3.connect('lesson_11__task_2_HR_guide.sqlite')
         cursor = sqlite_connection.cursor()
@@ -70,7 +69,7 @@ def database_manipulation(func, arg):
     finally:
         if sqlite_connection:
             sqlite_connection.close()
-        return result
+    return result
 
 
 def execute_script(args):
@@ -100,17 +99,15 @@ def get_id_list(list_of_tuples: list) -> list:
     return [element[0] for element in list_of_tuples]
 
 
-with open('lesson_11__task_2_queries.json', 'r') as file:
+with open('lesson_11__task_2_queries.json', 'r', encoding='utf-8') as file:
     queries = json.load(file)
 
 database_manipulation(execute_script, ("PRAGMA foreign_keys = ON;",))
 
 # Создание таблиц в базе данных
 
-sql_script = ''
 for table_name in TABLE_ORDER:
-    sql_script = ' '.join(queries.get(table_name).get('create'))
-    database_manipulation(execute_script, (sql_script,))
+    database_manipulation(execute_script, (' '.join(queries.get(table_name).get('create')),))
 
 # Создание представлений (VIEW) в базе данных
 
