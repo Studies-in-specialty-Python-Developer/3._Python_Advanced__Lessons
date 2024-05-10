@@ -8,7 +8,6 @@
 """
 
 import unittest
-from time import sleep
 
 from lesson_9__task_3 import students
 
